@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0a1f">
+<title>Поставить свечу онлайн</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* Всегда ночная тема (фиолетово-чёрная) */
+    --gold: #c9b6ff;
+    --gold-soft: #a99ad4;
+    --gold-dim: #6d628f;
+    --text: #e2ddf5;
+    --bg-1: #0d0a1f;
+    --bg-2: #07050f;
+    --bg-3: #030208;
+    --panel: rgba(160, 140, 255, 0.05);
+    --panel-border: rgba(160, 140, 255, 0.18);
+    --shadow: rgba(0,0,0,0.4);
+    --overlay: rgba(2, 1, 5, 0.75);
+    --quiet-bg: rgba(3, 2, 8, 0.94);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: radial-gradient(ellipse at 50% 20%, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 100px;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(180,160,255,0.4), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(180,160,255,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 40% 80%, rgba(140,120,255,0.25), transparent),
+      radial-gradient(1px 1px at 85% 20%, rgba(180,160,255,0.35), transparent),
+      radial-gradient(1px 1px at 55% 45%, rgba(180,160,255,0.2), transparent);
+    pointer-events: none;
+    z-index: 0;
+    animation: dust 12s infinite alternate ease-in-out;
+  }
+  @keyframes dust { from { opacity: 0.5; } to { opacity: 1; } }
+
+  .top-bar {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 50;
+  }
+  .icon-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--gold-soft);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  .icon-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-1px);
+    box-shadow: 0 0 18px rgba(200, 180, 255, 0.25);
+  }
+  .icon-btn.install-btn { display: none; }
+  .icon-btn.install-btn.show { display: flex; }
+
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+    text-align: center;
+    color: var(--gold);
+    text-shadow: 0 0 24px rgba(200, 180, 255, 0.45);
+    margin-bottom: 10px;
+    font-weight: normal;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--gold-soft);
+    font-style: italic;
+    margin-bottom: 8px;
+    font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+    position: relative;
+    z-index: 1;
+  }
+
+  .promise {
+    text-align: center;
+    color: var(--gold-dim);
+    margin-bottom: 20px;
+    font-size: 0.92rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 26px;
+    position: relative;
+    z-index: 1;
+    font-size: 0.78rem;
+    color: var(--gold-dim);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .steps .step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .steps .step .num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    transition: all 0.3s;
+  }
+  .steps .step.active {
+    color: var(--gold);
+    border-color: var(--panel-border);
+    background: var(--panel);
+  }
+  .steps .step.active .num {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1a0f04;
+  }
+  .steps .step.done { color: var(--gold-soft); }
+  .steps .step.done .num {
+    background: rgba(200, 180, 255, 0.2);
+    border-color: var(--gold-soft);
+    color: var(--gold-soft);
+  }
+  .steps .sep {
+    width: 14px; height: 1px;
+    background: var(--panel-border);
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 1100px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    animation: screenIn 0.4s ease-out;
+    position: relative;
+    z-index: 1;
+  }
+  .screen.active { display: flex; }
+  @keyframes screenIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reasons-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    width: 100%;
+  }
+  .reason-card {
+    text-align: left;
+    background: rgba(0,0,0,0.22);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--gold-soft);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .reason-card:hover {
+    border-color: var(--gold-soft);
+    background: rgba(180, 160, 255, 0.07);
+    transform: translateY(-2px);
+  }
+  .reason-card.selected {
+    border-color: var(--gold);
+    background: rgba(180, 160, 255, 0.14);
+    box-shadow: 0 0 20px rgba(180, 160, 255, 0.22);
+  }
+  .reason-card .rc-title { color: var(--gold); font-size: 0.98rem; letter-spacing: 0.2px; }
+  .reason-card .rc-desc { font-size: 0.76rem; color: var(--gold-dim); line-height: 1.35; }
+  .reason-card.selected .rc-desc { color: var(--gold-soft); }
+
+  .form-wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px; }
+  .chosen-reason {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: 12px;
+    background: rgba(180, 160, 255, 0.1);
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 20px rgba(180, 160, 255, 0.15);
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+  .chosen-reason .cr-flame {
+    width: 10px; height: 18px;
+    border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+    background: radial-gradient(ellipse at 50% 80%, #fffbe6 0%, #ffe066 32%, #ff9d00 70%, #ff6a00 100%);
+    animation: flicker 1.8s infinite ease-in-out;
+    box-shadow: 0 0 16px rgba(255, 170, 50, 0.6);
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .chosen-reason[data-color="blue"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #f0f8ff 0%, #a8d8ff 32%, #4da6ff 70%, #1a6fcc 100%); box-shadow: 0 0 16px rgba(80, 150, 255, 0.7); }
+  .chosen-reason[data-color="violet"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #f8f0ff 0%, #d8b0ff 32%, #a050e6 70%, #6a1eaa 100%); box-shadow: 0 0 16px rgba(180, 120, 255, 0.7); }
+  .chosen-reason[data-color="green"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #f0fff4 0%, #b0e6b0 32%, #50c870 70%, #1e8a3c 100%); box-shadow: 0 0 16px rgba(80, 200, 120, 0.7); }
+  .chosen-reason[data-color="red"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #fff0f0 0%, #ffb0b0 32%, #e04040 70%, #a01010 100%); box-shadow: 0 0 16px rgba(255, 100, 100, 0.7); }
+  .chosen-reason[data-color="pink"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #fff5fa 0%, #ffc0de 32%, #f07ab0 70%, #b03a70 100%); box-shadow: 0 0 16px rgba(255, 140, 190, 0.7); }
+  .chosen-reason[data-color="turquoise"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #f0fffe 0%, #a0f0ea 32%, #30c0b8 70%, #107a74 100%); box-shadow: 0 0 16px rgba(80, 220, 210, 0.7); }
+  .chosen-reason[data-color="white"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #ffffff 0%, #f0f0f5 32%, #c8c8d8 70%, #9090a8 100%); box-shadow: 0 0 16px rgba(220, 220, 240, 0.7); }
+  .chosen-reason[data-color="amber"] .cr-flame { background: radial-gradient(ellipse at 50% 80%, #fffaf0 0%, #ffd080 32%, #e08010 70%, #a05000 100%); box-shadow: 0 0 16px rgba(255, 160, 40, 0.7); }
+  .chosen-reason[data-color="blue"]   { border-color: #4da6ff; box-shadow: 0 0 20px rgba(80,150,255,0.2); background: rgba(80,150,255,0.1); }
+  .chosen-reason[data-color="violet"] { border-color: #a050e6; box-shadow: 0 0 20px rgba(180,120,255,0.2); background: rgba(180,120,255,0.1); }
+  .chosen-reason[data-color="green"]  { border-color: #50c870; box-shadow: 0 0 20px rgba(80,200,120,0.2); background: rgba(80,200,120,0.1); }
+  .chosen-reason[data-color="red"]    { border-color: #e04040; box-shadow: 0 0 20px rgba(255,100,100,0.2); background: rgba(255,100,100,0.1); }
+  .chosen-reason[data-color="pink"]   { border-color: #f07ab0; box-shadow: 0 0 20px rgba(255,140,190,0.2); background: rgba(255,140,190,0.1); }
+  .chosen-reason[data-color="turquoise"] { border-color: #30c0b8; box-shadow: 0 0 20px rgba(80,220,210,0.2); background: rgba(80,220,210,0.1); }
+  .chosen-reason[data-color="white"]  { border-color: #c8c8d8; box-shadow: 0 0 20px rgba(220,220,240,0.2); background: rgba(220,220,240,0.08); }
+  .chosen-reason[data-color="amber"]  { border-color: #e08010; box-shadow: 0 0 20px rgba(255,160,40,0.2); background: rgba(255,160,40,0.1); }
+
+  .chosen-reason .cr-body { flex: 1; }
+  .chosen-reason .cr-title { color: var(--gold); font-size: 1rem; }
+  .chosen-reason .cr-desc { color: var(--gold-soft); font-size: 0.78rem; margin-top: 2px; line-height: 1.35; }
+  .chosen-reason .cr-change {
+    background: none; border: 1px solid var(--panel-border); color: var(--gold-soft);
+    padding: 6px 12px; border-radius: 16px; font-family: inherit; font-size: 0.76rem;
+    cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+  }
+  .chosen-reason .cr-change:hover { border-color: var(--gold); color: var(--gold); }
+
+  .form-panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 24px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+  .field { margin-bottom: 16px; }
+  .field:last-of-type { margin-bottom: 0; }
+  .field label { display: block; font-size: 0.82rem; color: var(--gold-soft); margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--panel-border);
+    border-radius: 9px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(200, 180, 255, 0.12);
+  }
+  .field textarea { resize: vertical; min-height: 68px; }
+
+  .color-picker { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .color-swatch {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .color-swatch:hover { transform: scale(1.12); }
+  .color-swatch.selected { border-color: var(--gold); box-shadow: 0 0 14px rgba(200, 180, 255, 0.4); }
+  .color-swatch[data-c="gold"]   { background: radial-gradient(circle at 35% 35%, #fff6dd, #e0a52e); }
+  .color-swatch[data-c="blue"]   { background: radial-gradient(circle at 35% 35%, #eaf4ff, #4da6ff); }
+  .color-swatch[data-c="violet"] { background: radial-gradient(circle at 35% 35%, #f4eaff, #a050e6); }
+  .color-swatch[data-c="green"]  { background: radial-gradient(circle at 35% 35%, #eafff4, #50c870); }
+  .color-swatch[data-c="red"]       { background: radial-gradient(circle at 35% 35%, #ffe0e0, #e04040); }
+  .color-swatch[data-c="pink"]      { background: radial-gradient(circle at 35% 35%, #fff0f6, #f07ab0); }
+  .color-swatch[data-c="turquoise"] { background: radial-gradient(circle at 35% 35%, #e0fbfa, #30c0b8); }
+  .color-swatch[data-c="white"]     { background: radial-gradient(circle at 35% 35%, #ffffff, #c8c8d0); }
+  .color-swatch[data-c="amber"]     { background: radial-gradient(circle at 35% 35%, #fff0d0, #e08010); }
+
+  .saint-tip {
+    margin-top: 14px;
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    background: rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .saint-tip-toggle {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px; background: none; border: none;
+    color: var(--gold-soft); font-family: inherit; font-size: 0.85rem;
+    cursor: pointer; transition: color 0.2s; text-align: left;
+  }
+  .saint-tip-toggle:hover { color: var(--gold); }
+  .saint-tip-toggle .arrow { margin-left: auto; transition: transform 0.3s; font-size: 0.75rem; }
+  .saint-tip.open .saint-tip-toggle .arrow { transform: rotate(90deg); }
+  .saint-tip-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 14px; }
+  .saint-tip.open .saint-tip-body { max-height: 260px; padding: 0 14px 14px; }
+  .saint-tip-body .saint-text { font-size: 0.82rem; color: var(--gold-dim); line-height: 1.6; }
+  .saint-tip-body .saint-text strong { color: var(--gold-soft); font-weight: normal; }
+
+  .duration-picker { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .duration-btn {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--panel-border);
+    color: var(--gold-soft);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .duration-btn:hover { border-color: var(--gold-soft); }
+  .duration-btn.selected {
+    background: rgba(180, 160, 255, 0.18);
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 14px rgba(180, 160, 255, 0.2);
+  }
+  .duration-btn[data-days="0"] { border-style: dashed; }
+  .duration-btn[data-days="0"].selected {
+    border-style: solid;
+    background: rgba(200, 180, 255, 0.18);
+    border-color: #c9b6ff;
+    color: #e2ddf5;
+    box-shadow: 0 0 14px rgba(200, 180, 255, 0.25);
+  }
+
+  .light-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 18px;
+    background: linear-gradient(135deg, #a99ad4, #6d628f);
+    border: none;
+    border-radius: 11px;
+    color: #0d0a1f;
+    font-family: inherit;
+    font-size: 1.08rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 22px rgba(160, 140, 255, 0.3);
+  }
+  .light-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 30px rgba(160, 140, 255, 0.5); }
+  .light-btn:active { transform: translateY(0); }
+
+  .stats-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+  .stat-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 30px;
+    background: var(--panel); border: 1px solid var(--panel-border);
+    font-size: 0.85rem; color: var(--gold-soft); backdrop-filter: blur(4px);
+  }
+  .stat-pill .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gold); box-shadow: 0 0 10px var(--gold);
+    animation: pulse 2s infinite;
+  }
+  .stat-pill strong { color: var(--gold); font-weight: normal; }
+  @keyframes pulse {
+    0%,100% { opacity: 0.6; transform: scale(1); }
+    50%     { opacity: 1; transform: scale(1.35); }
+  }
+
+  .search-row {
+    display: flex; gap: 10px; width: 100%; max-width: 640px;
+    margin-bottom: 16px; flex-wrap: wrap; justify-content: center;
+  }
+  .search-input {
+    flex: 1 1 200px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--panel-border);
+    border-radius: 22px;
+    padding: 10px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    min-width: 160px;
+  }
+  .search-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200, 180, 255, 0.12); }
+  .search-input::placeholder { color: var(--gold-dim); }
+  .sort-select {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--panel-border);
+    border-radius: 22px;
+    padding: 10px 14px;
+    color: var(--gold-soft);
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.25s;
+  }
+  .sort-select:focus { border-color: var(--gold); }
+  .sort-select option { background: var(--bg-1); color: var(--text); }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center; }
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--gold-dim);
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .filter-btn:hover { color: var(--gold-soft); border-color: var(--gold-soft); }
+  .filter-btn.active { color: var(--gold); border-color: var(--gold); background: rgba(200, 180, 255, 0.08); }
+
+  .altar-wrap { width: 100%; display: flex; justify-content: center; }
+  .altar {
+    display: flex; gap: 44px; flex-wrap: wrap; justify-content: center; align-items: flex-end;
+    min-height: 260px; padding: 20px 10px 0; perspective: 800px;
+  }
+  .altar.many { gap: 18px; }
+  .altar-empty {
+    color: var(--gold-dim); font-style: italic; text-align: center;
+    padding: 60px 20px; font-size: 0.95rem; width: 100%;
+  }
+
+  .candle {
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+    animation: appear 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    transform-origin: bottom center;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .candle:hover { transform: translateY(-4px) scale(1.03); }
+  .altar.many .candle { transform: scale(0.72); transform-origin: bottom center; }
+  .altar.many .candle:hover { transform: scale(0.75) translateY(-3px); }
+  .candle.highlight .flame-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -20px -20px -10px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    animation: highlightPulse 1.5s infinite ease-in-out;
+    pointer-events: none;
+  }
+  @keyframes highlightPulse {
+    0%,100% { opacity: 0.3; transform: scale(0.9); }
+    50%     { opacity: 1; transform: scale(1.05); }
+  }
+  @keyframes appear {
+    from { opacity: 0; transform: translateY(26px) scale(0.85); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .candle.candle-of-day::before {
+    content: '✦';
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: var(--gold);
+    text-shadow: 0 0 12px var(--gold);
+    animation: twinkle 2.4s infinite ease-in-out;
+    z-index: 5;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+    50%     { opacity: 1; transform: translateX(-50%) scale(1.3); }
+  }
+  .candle.candle-of-day .glow {
+    background: radial-gradient(circle, rgba(200, 180, 255, 0.65) 0%, rgba(180, 160, 255, 0.18) 42%, transparent 72%);
+  }
+
+  .flame-wrap {
+    position: relative;
+    width: 40px;
+    height: 74px;
+    display: flex; justify-content: center; align-items: flex-end;
+    margin-bottom: -4px;
+  }
+  .glow {
+    position: absolute;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,170,50,0.45) 0%, rgba(255,150,30,0.12) 42%, transparent 72%);
+    bottom: 2px;
+    animation: flickerGlow 2.6s infinite ease-in-out;
+  }
+  .flame {
+    width: 17px; height: 40px;
+    background: radial-gradient(ellipse at 50% 80%, #fffbe6 0%, #ffe066 32%, #ff9d00 70%, #ff6a00 100%);
+    border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+    animation: flicker 1.8s infinite ease-in-out;
+    position: relative; z-index: 2;
+    transform-origin: bottom center;
+    filter: blur(0.3px);
+    transition: transform 0.6s, opacity 0.6s;
+  }
+  .flame::before {
+    content: '';
+    position: absolute;
+    width: 6px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    bottom: 5px; left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.7;
+    filter: blur(1.5px);
+  }
+  @keyframes flicker {
+    0%,100% { transform: scaleY(1) scaleX(1) rotate(-1deg); }
+    25%     { transform: scaleY(1.08) scaleX(0.96) rotate(1.5deg); }
+    50%     { transform: scaleY(0.94) scaleX(1.04) rotate(-1.5deg); }
+    75%     { transform: scaleY(1.05) scaleX(0.97) rotate(1deg); }
+  }
+  @keyframes flickerGlow {
+    0%,100% { opacity: 0.85; transform: scale(1); }
+    50%     { opacity: 1; transform: scale(1.12); }
+  }
+
+  .candle[data-color="blue"] .flame { background: radial-gradient(ellipse at 50% 80%, #f0f8ff 0%, #a8d8ff 32%, #4da6ff 70%, #1a6fcc 100%); }
+  .candle[data-color="blue"] .glow { background: radial-gradient(circle, rgba(100,170,255,0.45) 0%, rgba(80,150,255,0.12) 42%, transparent 72%); }
+  .candle[data-color="violet"] .flame { background: radial-gradient(ellipse at 50% 80%, #f8f0ff 0%, #d8b0ff 32%, #a050e6 70%, #6a1eaa 100%); }
+  .candle[data-color="violet"] .glow { background: radial-gradient(circle, rgba(180,120,255,0.45) 0%, rgba(150,90,255,0.12) 42%, transparent 72%); }
+  .candle[data-color="green"] .flame { background: radial-gradient(ellipse at 50% 80%, #f0fff4 0%, #b0e6b0 32%, #50c870 70%, #1e8a3c 100%); }
+  .candle[data-color="green"] .glow { background: radial-gradient(circle, rgba(100,220,130,0.4) 0%, rgba(80,190,110,0.12) 42%, transparent 72%); }
+  .candle[data-color="red"] .flame { background: radial-gradient(ellipse at 50% 80%, #fff0f0 0%, #ffb0b0 32%, #e04040 70%, #a01010 100%); }
+  .candle[data-color="red"] .glow { background: radial-gradient(circle, rgba(255,100,100,0.45) 0%, rgba(220,60,60,0.12) 42%, transparent 72%); }
+  .candle[data-color="pink"] .flame { background: radial-gradient(ellipse at 50% 80%, #fff5fa 0%, #ffc0de 32%, #f07ab0 70%, #b03a70 100%); }
+  .candle[data-color="pink"] .glow { background: radial-gradient(circle, rgba(255,140,190,0.45) 0%, rgba(240,120,176,0.12) 42%, transparent 72%); }
+  .candle[data-color="turquoise"] .flame { background: radial-gradient(ellipse at 50% 80%, #f0fffe 0%, #a0f0ea 32%, #30c0b8 70%, #107a74 100%); }
+  .candle[data-color="turquoise"] .glow { background: radial-gradient(circle, rgba(80,220,210,0.45) 0%, rgba(48,192,184,0.12) 42%, transparent 72%); }
+  .candle[data-color="white"] .flame { background: radial-gradient(ellipse at 50% 80%, #ffffff 0%, #f0f0f5 32%, #c8c8d8 70%, #9090a8 100%); }
+  .candle[data-color="white"] .glow { background: radial-gradient(circle, rgba(220,220,240,0.45) 0%, rgba(200,200,216,0.12) 42%, transparent 72%); }
+  .candle[data-color="amber"] .flame { background: radial-gradient(ellipse at 50% 80%, #fffaf0 0%, #ffd080 32%, #e08010 70%, #a05000 100%); }
+  .candle[data-color="amber"] .glow { background: radial-gradient(circle, rgba(255,160,40,0.45) 0%, rgba(224,128,16,0.12) 42%, transparent 72%); }
+
+  .candle.out .flame { transform: scaleY(0) scaleX(0.3); opacity: 0; }
+  .candle.out .glow { opacity: 0; animation: none; }
+  .candle.out .flame-wrap { opacity: 0; }
+  .candle.out .smoke { opacity: 1; animation: smoke 2.4s ease-out forwards; }
+  .smoke {
+    position: absolute;
+    bottom: 8px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(200, 200, 200, 0.4);
+    opacity: 0;
+    filter: blur(3px);
+  }
+  @keyframes smoke {
+    0%   { opacity: 0.7; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-70px) scale(4); }
+  }
+
+  .body-candle {
+    width: 32px;
+    border-radius: 6px 6px 4px 4px;
+    position: relative;
+    background: linear-gradient(90deg, #c9a86f 0%, #f7e9c4 30%, #fff6dd 50%, #f7e9c4 70%, #c9a86f 100%);
+    box-shadow: 0 0 26px rgba(200, 180, 255, 0.16), inset -2px 0 6px rgba(0,0,0,0.15), inset 2px 0 6px rgba(255,255,255,0.3);
+    transition: filter 0.6s;
+  }
+  .candle[data-color="blue"] .body-candle { background: linear-gradient(90deg, #8aa8c9 0%, #d4e6f7 30%, #eaf4ff 50%, #d4e6f7 70%, #8aa8c9 100%); }
+  .candle[data-color="violet"] .body-candle { background: linear-gradient(90deg, #a88ac9 0%, #e6d4f7 30%, #f4eaff 50%, #e6d4f7 70%, #a88ac9 100%); }
+  .candle[data-color="green"] .body-candle { background: linear-gradient(90deg, #8ac9a8 0%, #d4f7e6 30%, #eafff4 50%, #d4f7e6 70%, #8ac9a8 100%); }
+  .candle[data-color="red"] .body-candle { background: linear-gradient(90deg, #c98a8a 0%, #f7d4d4 30%, #ffeaea 50%, #f7d4d4 70%, #c98a8a 100%); }
+  .candle[data-color="pink"] .body-candle { background: linear-gradient(90deg, #c98aa8 0%, #f7d4e6 30%, #ffeaf4 50%, #f7d4e6 70%, #c98aa8 100%); }
+  .candle[data-color="turquoise"] .body-candle { background: linear-gradient(90deg, #8ac9c4 0%, #d4f7f4 30%, #eafffe 50%, #d4f7f4 70%, #8ac9c4 100%); }
+  .candle[data-color="white"] .body-candle { background: linear-gradient(90deg, #b8b8c4 0%, #e6e6ee 30%, #f8f8ff 50%, #e6e6ee 70%, #b8b8c4 100%); }
+  .candle[data-color="amber"] .body-candle { background: linear-gradient(90deg, #c9a86f 0%, #f7e0b0 30%, #fff0d8 50%, #f7e0b0 70%, #c9a86f 100%); }
+  .candle.out .body-candle { filter: brightness(0.6) saturate(0.6); }
+
+  .body-candle::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 8px;
+    background: #4a3520;
+    border-radius: 2px;
+  }
+  .wick {
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 2px; height: 8px;
+    background: #3b2a18;
+    border-radius: 1px;
+    z-index: 3;
+  }
+  .holder {
+    width: 56px; height: 12px;
+    background: linear-gradient(180deg, #b08d3e 0%, #7a5c22 100%);
+    border-radius: 50%;
+    margin-top: -2px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+  }
+  .candle-label {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #a99ad4;
+    letter-spacing: 0.4px;
+    text-align: center;
+    max-width: 140px;
+  }
+  .candle-label .name {
+    display: block;
+    font-size: 0.78rem;
+    color: #8a7ab8;
+    margin-top: 2px;
+    font-style: italic;
+  }
+  .candle-label .timer {
+    display: block;
+    font-size: 0.7rem;
+    color: #6d628f;
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+  }
+  .candle-label .timer.forever { color: #8a7ab8; }
+
+  .prayer {
+    max-width: 520px;
+    text-align: center;
+    margin-top: 44px;
+    padding: 26px 20px 0;
+    border-top: 1px solid var(--panel-border);
+    color: var(--gold-dim);
+    font-style: italic;
+    line-height: 1.8;
+    font-size: 0.95rem;
+    position: relative;
+    z-index: 1;
+  }
+  .prayer .amen {
+    display: block;
+    margin-top: 12px;
+    color: var(--gold-soft);
+    font-style: normal;
+    letter-spacing: 3px;
+  }
+
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(0deg, var(--bg-3) 0%, rgba(3,2,8,0.92) 100%);
+    border-top: 1px solid var(--panel-border);
+    z-index: 40;
+    backdrop-filter: blur(10px);
+    flex-wrap: wrap;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .nav-btn {
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-btn.primary {
+    background: linear-gradient(135deg, #a99ad4, #6d628f);
+    border: none;
+    color: #0d0a1f;
+    font-weight: bold;
+    box-shadow: 0 4px 18px rgba(160, 140, 255, 0.3);
+  }
+  .nav-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(160, 140, 255, 0.5); }
+  .nav-btn.secondary {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--gold-soft);
+  }
+  .nav-btn.secondary:hover { border-color: var(--gold); color: var(--gold); }
+  .nav-btn .badge {
+    background: var(--gold);
+    color: #0d0a1f;
+    font-size: 0.7rem;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: bold;
+  }
+
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: var(--overlay);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 100;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: linear-gradient(160deg, var(--bg-1) 0%, var(--bg-3) 100%);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 32px 28px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s;
+    box-shadow: 0 20px 60px var(--shadow);
+    position: relative;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+
+  .modal .mini-flame {
+    width: 14px; height: 26px;
+    margin: 0 auto 16px;
+    background: radial-gradient(ellipse at 50% 80%, #fffbe6 0%, #ffe066 32%, #ff9d00 70%, #ff6a00 100%);
+    border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+    animation: flicker 1.8s infinite ease-in-out;
+    box-shadow: 0 0 30px rgba(255, 170, 50, 0.6);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .modal h3 { color: var(--gold); font-weight: normal; font-size: 1.25rem; margin-bottom: 6px; }
+  .modal .modal-sub { color: var(--gold-dim); font-size: 0.82rem; margin-bottom: 18px; }
+  .modal .modal-text {
+    color: var(--gold-soft);
+    font-style: italic;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .modal .modal-text.empty { color: var(--gold-dim); font-style: normal; }
+  .modal .modal-timer { color: var(--gold-dim); font-size: 0.78rem; margin-bottom: 18px; }
+  .modal .modal-timer.forever { color: #8a7ab8; }
+
+  .modal-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .modal-btns button {
+    flex: 1;
+    min-width: 100px;
+    padding: 12px;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .modal-btns .ok {
+    background: linear-gradient(135deg, #a99ad4, #6d628f);
+    border: none;
+    color: #0d0a1f;
+    font-weight: bold;
+  }
+  .modal-btns .ok:hover { box-shadow: 0 4px 18px rgba(160, 140, 255, 0.5); }
+  .modal-btns .blow {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--panel-border);
+    color: var(--gold-soft);
+  }
+  .modal-btns .blow:hover { background: rgba(180, 160, 255, 0.12); border-color: var(--gold); }
+  .modal-btns .pray {
+    flex: 1 1 100%;
+    background: rgba(180, 160, 255, 0.1);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-weight: bold;
+  }
+  .modal-btns .pray:hover { background: rgba(180, 160, 255, 0.2); box-shadow: 0 0 18px rgba(200, 180, 255, 0.25); }
+  .modal-btns .share {
+    flex: 1 1 100%;
+    background: rgba(120, 180, 255, 0.1);
+    border: 1px solid rgba(120, 180, 255, 0.5);
+    color: #8ab8ff;
+    font-weight: bold;
+  }
+  .modal-btns .share:hover { background: rgba(120, 180, 255, 0.2); box-shadow: 0 0 18px rgba(120, 180, 255, 0.25); }
+  .modal-btns .del {
+    flex: 0 0 auto;
+    min-width: auto;
+    padding: 12px 16px;
+    background: rgba(255, 80, 80, 0.08);
+    border: 1px solid rgba(255, 80, 80, 0.25);
+    color: #e08a8a;
+  }
+  .modal-btns .del:hover { background: rgba(255, 80, 80, 0.18); border-color: #ff6a6a; }
+  
+  .my-candles-title {
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .my-candles-title > span:first-child {
+    color: var(--gold);
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+  }
+  .my-count {
+    display: inline-block;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 1px 10px;
+    font-size: 0.95rem;
+    color: var(--gold-soft);
+    margin-left: 4px;
+  }
+  .my-note {
+    color: var(--gold-dim);
+    font-size: 0.78rem;
+    font-style: italic;
+    line-height: 1.4;
+  }
+  .quiet-prayer-overlay {
+    position: fixed; inset: 0;
+    background: var(--quiet-bg);
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease;
+    z-index: 150;
+  }
+  .quiet-prayer-overlay.show { opacity: 1; pointer-events: auto; }
+  .quiet-prayer { max-width: 460px; text-align: center; color: var(--gold-soft); }
+  .quiet-prayer .qp-flame {
+    width: 16px; height: 30px;
+    margin: 0 auto 26px;
+    border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+    background: radial-gradient(ellipse at 50% 80%, #fffbe6 0%, #ffe066 32%, #ff9d00 70%, #ff6a00 100%);
+    animation: flicker 2.4s infinite ease-in-out;
+    box-shadow: 0 0 40px rgba(255, 170, 50, 0.6);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .quiet-prayer .qp-text {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    font-style: italic;
+    color: var(--gold-soft);
+    animation: qpFade 1.2s ease-out;
+  }
+  .quiet-prayer .qp-name {
+    margin-top: 18px;
+    font-size: 0.9rem;
+    color: var(--gold-dim);
+    font-style: normal;
+    letter-spacing: 0.5px;
+  }
+  .quiet-prayer .qp-close {
+    margin-top: 32px;
+    background: none;
+    border: 1px solid var(--panel-border);
+    color: var(--gold-dim);
+    padding: 10px 24px;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .quiet-prayer .qp-close:hover { color: var(--gold); border-color: var(--gold); }
+  @keyframes qpFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tools-menu {
+    display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .small-btn {
+    background: none;
+    border: 1px solid var(--panel-border);
+    color: var(--gold-dim);
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .small-btn:hover { color: var(--gold-soft); border-color: var(--gold-soft); }
+
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 32px);
+    text-align: center;
+    background: var(--bg-1);
+    border: 1px solid var(--panel-border);
+    color: var(--gold);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    z-index: 300;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .toast.visible { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .altar { gap: 24px; }
+    .form-panel { padding: 18px; }
+    .reasons-cards { grid-template-columns: 1fr; }
+    .top-bar { top: 10px; right: 10px; }
+    .icon-btn { width: 38px; height: 38px; font-size: 1rem; }
+    .bottom-bar { padding: 10px 12px; gap: 8px; }
+    .nav-btn { padding: 9px 16px; font-size: 0.85rem; }
+    .chosen-reason { flex-wrap: wrap; }
+    .chosen-reason .cr-change { margin-left: auto; }
+    .duration-picker { gap: 6px; }
+    .duration-btn { padding: 7px 10px; font-size: 0.76rem; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <button class="icon-btn install-btn" id="installBtn" title="Установить приложение" aria-label="Установить приложение">⬇</button>
+  </div>
+
+  <h1>Поставить свечу онлайн</h1>
+  <p class="subtitle">Зажгите виртуальную свечу о здравии, упокоении или о своей нужде.</p>
+  <p class="promise">Ваша молитва будет услышана.</p>
+
+  <div class="steps" id="steps">
+    <div class="step active" data-step="1"><span class="num">1</span> Повод</div>
+    <div class="sep"></div>
+    <div class="step" data-step="2"><span class="num">2</span> Свеча</div>
+    <div class="sep"></div>
+    <div class="step" data-step="3"><span class="num">3</span> Свечи</div>
+  </div>
+
+  <section class="screen active" id="screenReasons">
+    <div class="reasons-cards" id="reasonsCards"></div>
+  </section>
+
+  <section class="screen" id="screenForm">
+    <div class="form-wrap">
+      <div class="chosen-reason" id="chosenReason" data-color="gold">
+        <div class="cr-flame"></div>
+        <div class="cr-body">
+          <div class="cr-title" id="chosenTitle"></div>
+          <div class="cr-desc" id="chosenDesc"></div>
+        </div>
+        <button class="cr-change" id="changeReasonBtn">Сменить</button>
+      </div>
+
+      <div class="form-panel">
+        <div class="field">
+          <label for="personName">Имя (за кого ставим)</label>
+          <input type="text" id="personName" placeholder="Например: Мария, Иоанн... (можно через запятую)" maxlength="200" autocomplete="off">
+          <div style="font-size:0.72rem;color:var(--gold-dim);margin-top:5px">
+            Несколько имён через запятую — зажгутся отдельные свечи за каждого
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="prayerText">Своими словами (необязательно)</label>
+          <textarea id="prayerText" placeholder="Господи, помилуй..." maxlength="300"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Цвет свечи</label>
+          <div class="color-picker" id="colorPicker">
+            <div class="color-swatch selected" data-c="gold" title="Золотая" role="button" tabindex="0" aria-label="Золотая"></div>
+            <div class="color-swatch" data-c="blue" title="Голубая" role="button" tabindex="0" aria-label="Голубая"></div>
+            <div class="color-swatch" data-c="violet" title="Фиолетовая" role="button" tabindex="0" aria-label="Фиолетовая"></div>
+            <div class="color-swatch" data-c="green" title="Зелёная" role="button" tabindex="0" aria-label="Зелёная"></div>
+            <div class="color-swatch" data-c="red" title="Алая" role="button" tabindex="0" aria-label="Алая"></div>
+            <div class="color-swatch" data-c="pink" title="Розовая" role="button" tabindex="0" aria-label="Розовая"></div>
+            <div class="color-swatch" data-c="turquoise" title="Бирюзовая" role="button" tabindex="0" aria-label="Бирюзовая"></div>
+            <div class="color-swatch" data-c="white" title="Серебристая" role="button" tabindex="0" aria-label="Серебристая"></div>
+            <div class="color-swatch" data-c="amber" title="Янтарная" role="button" tabindex="0" aria-label="Янтарная"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Сколько горит</label>
+          <div class="duration-picker" id="durationPicker">
+            <button type="button" class="duration-btn" data-days="1">1 день</button>
+            <button type="button" class="duration-btn selected" data-days="3">3 дня</button>
+            <button type="button" class="duration-btn" data-days="7">7 дней</button>
+            <button type="button" class="duration-btn" data-days="40">40 дней</button>
+            <button type="button" class="duration-btn" data-days="0">∞ Бессрочная</button>
+          </div>
+        </div>
+
+        <div class="saint-tip" id="saintTip">
+          <button type="button" class="saint-tip-toggle" id="saintTipToggle">
+            <span>Кому молятся в этой нужде?</span>
+            <span class="arrow">▶</span>
+          </button>
+          <div class="saint-tip-body">
+            <div class="saint-text" id="saintText"></div>
+          </div>
+        </div>
+
+        <button class="light-btn" id="lightBtn">Зажечь свечу</button>
+      </div>
+    </div>
+  </section>
+
+   <section class="screen" id="screenCandles">
+    <div class="stats-row">
+      <div class="stat-pill">
+        <span class="pulse"></span>
+        <span>Всего на сайте: <strong id="totalGlobal">—</strong></span>
+      </div>
+      <div class="stat-pill">
+        <span>Сегодня: <strong id="todayGlobal">—</strong></span>
+      </div>
+    </div>
+
+    <div class="my-candles-title">
+      <span>Мои свечи <span class="my-count" id="myCount">0</span></span>
+      <span class="my-note">Здесь только ваши свечи. А всего на сайте их гораздо больше</span>
+    </div>
+
+    <div class="search-row">
+      <input type="search" class="search-input" id="searchInput" placeholder="Поиск по имени...">
+      <select class="sort-select" id="sortSelect">
+        <option value="new">Сначала новые</option>
+        <option value="old">Сначала старые</option>
+        <option value="reason">По поводу</option>
+      </select>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="lit">Горящие</button>
+      <button class="filter-btn" data-filter="health">О здравии</button>
+      <button class="filter-btn" data-filter="rest">Об упокоении</button>
+      <button class="filter-btn" data-filter="out">Задутые</button>
+    </div>
+
+    <div class="altar-wrap">
+      <div class="altar" id="altar"></div>
+    </div>
+
+    <div class="tools-menu">
+      <button class="small-btn" id="exportBtn">Экспорт</button>
+      <button class="small-btn" id="importBtn">Импорт</button>
+      <button class="small-btn" id="pngBtn">Картинка</button>
+      <button class="small-btn" id="clearBtn" style="display:none">Убрать все</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </section>
+
+  <div class="prayer">
+    «Господи Иисусе Христе, Сыне Божий, молитвами Пречистыя Твоея Матере<br>
+    и всех святых Твоих, помилуй нас.»
+    <span class="amen">Аминь.</span>
+  </div>
+
+  <div class="bottom-bar" id="bottomBar">
+    <button class="nav-btn secondary" id="backBtn" style="display:none">← Назад</button>
+    <button class="nav-btn primary" id="viewCandlesBtn">
+      Мои свечи <span class="badge" id="candlesBadge">0</span>
+    </button>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="mini-flame" id="modalFlame"></div>
+      <h3 id="modalTitle">Свеча зажжена</h3>
+      <div class="modal-sub" id="modalSub"></div>
+      <div class="modal-text" id="modalText"></div>
+      <div class="modal-timer" id="modalTimer"></div>
+      <div class="modal-btns">
+        <button class="pray" id="modalPray">Помолиться</button>
+        <button class="share" id="modalShare">Поделиться ссылкой</button>
+        <button class="ok" id="modalOk">Аминь</button>
+        <button class="blow" id="modalBlow">Задуть</button>
+        <button class="del" id="modalDel" title="Удалить">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiet-prayer-overlay" id="quietPrayerOverlay">
+    <div class="quiet-prayer">
+      <div class="qp-flame" id="qpFlame"></div>
+      <div class="qp-text" id="qpText"></div>
+      <div class="qp-name" id="qpName"></div>
+      <button class="qp-close" id="qpClose">Завершить молитву</button>
+    </div>
+  </div>
+
+<script>
+  // ==================== КОНСТАНТЫ ====================
+  const STORAGE_KEY = 'virtual_candles_v11';
+  const STATS_KEY = 'virtual_candles_stats';
+  const CANDLE_OF_DAY_KEY = 'virtual_candles_candle_of_day';
+  const ANALYTICS_KEY = 'virtual_candles_analytics';
+
+  const supabase = null;
+
+  async function fetchStats() {
+    if (supabase) {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: todayRow } = await supabase.from('candle_stats').select('count').eq('date', today).maybeSingle();
+        const { data: all } = await supabase.from('candle_stats').select('count');
+        const total = (all || []).reduce((s, r) => s + (r.count || 0), 0);
+        return { total, today: todayRow ? todayRow.count : 0, date: today };
+      } catch (e) {}
+    }
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const raw = localStorage.getItem(STATS_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.date === today) return { total: data.total, today: data.today, date: today };
+        return { total: data.total, today: 0, date: today };
+      }
+    } catch (e) {}
+    return { total: 519555, today: 1021, date: new Date().toISOString().slice(0, 10) };
+  }
+
+  async function incrementStats() {
+    if (supabase) {
+      try { await supabase.rpc('increment_candle_count'); return; } catch (e) {}
+    }
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      let data = { date: today, total: 519555, today: 1021 };
+      const raw = localStorage.getItem(STATS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.date === today) data = parsed;
+        else data = { date: today, total: parsed.total, today: 0 };
+      }
+      data.total += 1;
+      data.today += 1;
+      localStorage.setItem(STATS_KEY, JSON.stringify(data));
+      return data;
+    } catch (e) { return null; }
+  }
+
+  const REASONS = [
+    { id: 'health',      title: 'О здравии',             desc: 'Молитва о здоровье и благополучии близких.', type: 'health' },
+    { id: 'healing',     title: 'О выздоровлении',       desc: 'Об исцелении от болезни и скорейшем выздоровлении.', type: 'health' },
+    { id: 'child_health',title: 'За здоровье ребёнка',   desc: 'Молитва за здоровье и исцеление ребёнка.', type: 'health' },
+    { id: 'women_health',title: 'О женском здоровье',    desc: 'За себя, за подругу, за маму или дочь.', type: 'health' },
+    { id: 'wellbeing',   title: 'О благополучии',        desc: 'О благополучии в семье, на работе, в делах.', type: 'health' },
+    { id: 'family',      title: 'О семье',               desc: 'О мире, любви и благополучии в семье.', type: 'health' },
+    { id: 'children',    title: 'О детях',               desc: 'О здоровье и благополучии детей.', type: 'health' },
+    { id: 'work',        title: 'О работе',              desc: 'О помощи в работе и карьере.', type: 'health' },
+    { id: 'money',       title: 'О достатке',            desc: 'О финансовом благополучии и достатке в доме.', type: 'health' },
+    { id: 'study',       title: 'Об учёбе',              desc: 'Контрольные, зачёты, сессия, защита диплома.', type: 'health' },
+    { id: 'exam',        title: 'За экзамен',            desc: 'О помощи в учёбе и успешной сдаче экзаменов.', type: 'health' },
+    { id: 'admission',   title: 'За поступление',        desc: 'О поступлении в вуз или колледж на бюджет.', type: 'health' },
+    { id: 'success',     title: 'За успех',              desc: 'О успехе в делах, начинаниях и достижении целей.', type: 'health' },
+    { id: 'love',        title: 'За любовь',             desc: 'О любви, счастье в отношениях и гармонии в паре.', type: 'health' },
+    { id: 'marriage',    title: 'О замужестве',          desc: 'О создании семьи и обретении счастья в браке.', type: 'health' },
+    { id: 'pregnancy',   title: 'За беременность',       desc: 'О зачатии, благополучной беременности и рождении здорового ребёнка.', type: 'health' },
+    { id: 'travel',      title: 'О путешествующих',      desc: 'О защите в дороге и благополучном возвращении.', type: 'health' },
+    { id: 'military',    title: 'За военнослужащих',     desc: 'О защите, здоровье и благополучном возвращении домой.', type: 'health' },
+    { id: 'peace',       title: 'О мире',                desc: 'О мире, прекращении вражды и возвращении близких.', type: 'health' },
+    { id: 'protect',     title: 'За защиту',             desc: 'О защите от бед, опасностей и всякого зла.', type: 'health' },
+    { id: 'evil_eye',    title: 'От сглаза',             desc: 'О защите от сглаза, порчи и негативного влияния.', type: 'health' },
+    { id: 'calm',        title: 'О душевном покое',      desc: 'При тревоге, бессоннице, унынии и тяжёлых мыслях.', type: 'health' },
+    { id: 'new_home',    title: 'О новом доме',          desc: 'При переезде, покупке жилья и о благополучии в новом доме.', type: 'health' },
+    { id: 'reconcile',   title: 'О примирении',          desc: 'О прощении обид и восстановлении отношений с близкими.', type: 'health' },
+    { id: 'pet',         title: 'О питомце',             desc: 'О выздоровлении питомца и о том, чтобы пропавший нашёлся.', type: 'health' },
+    { id: 'thanks',      title: 'Благодарственная',      desc: 'Свеча благодарности Господу за помощь и милость.', type: 'health' },
+    { id: 'forgive',     title: 'О прощении грехов',     desc: 'Покаянная молитва о прощении содеянного и очищении совести.', type: 'health' },
+    { id: 'rest',        title: 'Об упокоении',          desc: 'Молитва за упокой души усопших. Вечная память.', type: 'rest' },
+    { id: 'memory',      title: 'Свеча памяти',          desc: 'В память об ушедших близких. Вечная память.', type: 'rest' },
+    { id: 'special',     title: 'Особое прошение',       desc: 'Не нашли подходящую свечу? Напишите своё прошение своими словами.', type: 'health' }
+  ];
+
+  const SAINTS = {
+    health:'Господу Иисусу Христу, Пресвятой Богородице, святителю Луке, великомученику Пантелеимону.',
+    healing:'Великомученику Пантелеимону, святителю Луке, бессребреникам Косме и Дамиану.',
+    child_health:'Пресвятой Богородице, святителю Луке, мученику Витту, преподобному Стилиану.',
+    women_health:'Пресвятой Богородице, великомученице Екатерине, преподобному Агапиту.',
+    wellbeing:'Святителю Николаю Чудотворцу, святителю Спиридону Тримифунтскому, преподобному Серафиму Вырицкому.',
+    family:'Пресвятой Богородице, святым Петру и Февронии Муромским, святителю Николаю Чудотворцу.',
+    children:'Пресвятой Богородице, святителю Николаю Чудотворцу, преподобному Сергию Радонежскому.',
+    work:'Святителю Спиридону Тримифунтскому, святителю Николаю Чудотворцу, преподобному Сергию Радонежскому.',
+    money:'Святителю Спиридону Тримифунтскому, святителю Николаю Чудотворцу, преподобному Серафиму Вырицкому.',
+    study:'Преподобному Сергию Радонежскому, святителю Иоанну Златоусту, преподобному Серафиму Саровскому.',
+    exam:'Преподобному Сергию Радонежскому, святителю Иоанну Златоусту, святой мученице Татиане.',
+    admission:'Преподобному Сергию Радонежскому, святой мученице Татиане, святителю Иоанну Златоусту.',
+    success:'Святителю Николаю Чудотворцу, святителю Спиридону Тримифунтскому, преподобному Сергию Радонежскому.',
+    love:'Святым Петру и Февронии Муромским, святителю Николаю Чудотворцу, Пресвятой Богородице.',
+    marriage:'Святым Петру и Февронии Муромским, святителю Николаю Чудотворцу, Пресвятой Богородице.',
+    pregnancy:'Пресвятой Богородице, святым Иоакиму и Анне, преподобному Стилиану.',
+    travel:'Святителю Николаю Чудотворцу, святому мученику Христофору, святителю Спиридону Тримифунтскому.',
+    military:'Святому великомученику Георгию Победоносцу, святителю Николаю Чудотворцу, Архангелу Михаилу.',
+    peace:'Пресвятой Богородице, святителю Николаю Чудотворцу, Архангелу Михаилу.',
+    protect:'Святителю Николаю Чудотворцу, Архангелу Михаилу, святому великомученику Георгию Победоносцу.',
+    evil_eye:'Святителю Николаю Чудотворцу, мученику Киприану и мученице Иустине, Пресвятой Богородице.',
+    calm:'Пресвятой Богородице, святителю Николаю Чудотворцу, преподобному Серафиму Саровскому.',
+    new_home:'Святителю Николаю Чудотворцу, святому мученику Вонифатию, Пресвятой Богородице.',
+    reconcile:'Пресвятой Богородице, святителю Николаю Чудотворцу, преподобному Сергию Радонежскому.',
+    pet:'Святому мученику Власию Севастийскому, святителю Николаю Чудотворцу, преподобному Герасиму Иорданскому.',
+    thanks:'Господу Иисусу Христу, Пресвятой Богородице, святителю Николаю Чудотворцу.',
+    forgive:'Господу Иисусу Христу, Пресвятой Богородице, святителю Иоанну Златоусту.',
+    rest:'Господу Иисусу Христу, Пресвятой Богородице, святителю Иоанну Златоусту. Молитва «Со святыми упокой».',
+    memory:'Господу Иисусу Христу, Пресвятой Богородице. Молитва «Со святыми упокой».',
+    special:'Господу Иисусу Христу, Пресвятой Богородице, святителю Николаю Чудотворцу.'
+  };
+
+  const PRAYERS = {
+    health:       'Господи Иисусе Христе, Сыне Божий, молитвами Пречистыя Твоея Матере, святителя Луки и всех святых Твоих, исцели раба Твоего и даруй ему здравие душевное и телесное. Аминь.',
+    healing:      'О, великий угодниче Христов и целителю Пантелеимоне, моли Бога о рабе Твоём, да исцелит его от недуга телесного и душевного. Аминь.',
+    child_health: 'Пресвятая Богородице, Мати чад Своих, сохрани и исцели чадо моё, даруй ему здравие и покров Твой. Аминь.',
+    women_health: 'Пресвятая Богородице, Всецарице и Помощнице в родах, исцели рабу Твою и даруй ей здравие и благополучие. Аминь.',
+    wellbeing:    'Святителю отче Николае, моли Бога о рабе Твоём, да дарует ему мир, благополучие и помощь во всех делах. Аминь.',
+    family:       'Святии Петре и Февроние, молите Бога о семье нашей, да сохранит Он любовь, мир и согласие в доме нашем. Аминь.',
+    children:     'Господи Иисусе Христе, благослови чад наших, сохрани их в здравии и благочестии, настави на путь правый. Аминь.',
+    work:         'Святителю Спиридоне, моли Бога о рабе Твоём, да поможет Он в трудах и дарует успех в делах его. Аминь.',
+    money:        'Святителю Спиридоне Тримифунтский, моли Бога о рабе Твоём, да дарует Он достаток и помощь в нуждах житейских. Аминь.',
+    study:        'Преподобне отче Сергие, моли Бога о рабе Твоём, да дарует Он разумение, прилежание и успех в учении. Аминь.',
+    exam:         'Преподобне отче Сергие и святая мученице Татиано, молите Бога о рабе Твоём, да поможет Он в испытании и дарует успешное учение. Аминь.',
+    admission:    'Преподобне отче Сергие, моли Бога о рабе Твоём, да устроит Он путь его и поможет поступить в избранное училище. Аминь.',
+    success:      'Святителю Николае, моли Бога о рабе Твоём, да благословит Он начинания его и дарует успех во славу Его. Аминь.',
+    love:         'Святии Петре и Февроние, молите Бога о рабе Твоём, да обретёт он чистую любовь и счастье в отношениях. Аминь.',
+    marriage:     'Святии Петре и Февроние, молите Бога о рабе Твоём, да устроит Он брак его и дарует счастье в семье. Аминь.',
+    pregnancy:    'Пресвятая Богородице, Помощнице в родах, моли Сына Твоего о рабе Твоей, да дарует Он зачатие, благополучную беременность и рождение здорового ребёнка. Аминь.',
+    travel:       'Святителю Николае Чудотворче, моли Бога о рабе Твоём, да сохранит Он его в пути и дарует благополучное возвращение. Аминь.',
+    military:     'Святый великомучениче Георгие Победоносце, моли Бога о воине нашем, да сохранит Он его от бед и дарует благополучное возвращение домой. Аминь.',
+    peace:        'Господи Иисусе Христе, даруй мир земле нашей, прекрати вражду и распри, сохрани близких наших и возврати их в дом. Аминь.',
+    protect:      'Святителю Николае, моли Бога о рабе Твоём, да оградит Он его от бед, опасностей и всякого зла. Аминь.',
+    evil_eye:     'Святый мучениче Киприане и мученице Иустино, молите Бога о рабе Твоём, да защитит Он его от сглаза, порчи и всякого зла. Аминь.',
+    calm:         'Пресвятая Богородице, Утоли моя печали, утеши раба Твоего, даруй душевный покой при тревоге и унынии. Аминь.',
+    new_home:     'Святителю Николае, моли Бога о рабе Твоём, да благословит Он новый дом его и дарует мир и благополучие в нём. Аминь.',
+    reconcile:    'Господи Иисусе Христе, даруй прощение обид и примирение с ближними, восстанови мир и любовь между нами. Аминь.',
+    pet:          'Святый мучениче Власие, моли Бога о питомце нашем, да сохранит Он его в здравии и благополучии. Аминь.',
+    thanks:       'Господи Иисусе Христе, благодарю Тебя за милость и помощь Твою, за всякое благо, дарованное нам. Аминь.',
+    forgive:      'Господи Иисусе Христе, приими покаяние моё, прости грехи мои и очисти совесть мою по велицей милости Твоей. Аминь.',
+    rest:         'Со святыми упокой, Христе, души раб Твоих, идеже несть болезнь, ни печаль, ни воздыхание, но жизнь безконечная. Аминь.',
+    memory:       'Господи Иисусе Христе, упокой души усопших раб Твоих и сотвори им вечную память. Аминь.',
+    special:      'Господи Иисусе Христе, Сыне Божий, приими прошение моё, услыши молитву мою и сотвори по воле Твоей святой. Аминь.'
+  };
+
+  const FLAME_GRADIENTS = {
+    gold:['#fffbe6','#ffe066','#ff9d00','#ff6a00'],
+    blue:['#f0f8ff','#a8d8ff','#4da6ff','#1a6fcc'],
+    violet:['#f8f0ff','#d8b0ff','#a050e6','#6a1eaa'],
+    green:['#f0fff4','#b0e6b0','#50c870','#1e8a3c'],
+    red:['#fff0f0','#ffb0b0','#e04040','#a01010'],
+    pink:['#fff5fa','#ffc0de','#f07ab0','#b03a70'],
+    turquoise:['#f0fffe','#a0f0ea','#30c0b8','#107a74'],
+    white:['#ffffff','#f0f0f5','#c8c8d8','#9090a8'],
+    amber:['#fffaf0','#ffd080','#e08010','#a05000']
+  };
+  const FLAME_GLOWS = {
+    gold:'rgba(255,170,50,0.6)', blue:'rgba(80,150,255,0.7)', violet:'rgba(180,120,255,0.7)',
+    green:'rgba(80,200,120,0.7)', red:'rgba(255,100,100,0.7)', pink:'rgba(255,140,190,0.7)',
+    turquoise:'rgba(80,220,210,0.7)', white:'rgba(220,220,240,0.7)', amber:'rgba(255,160,40,0.7)'
+  };
+
+  function applyFlameStyle(el, color, isLit) {
+    const g = FLAME_GRADIENTS[color] || FLAME_GRADIENTS.gold;
+    el.style.background = `radial-gradient(ellipse at 50% 80%, ${g[0]} 0%, ${g[1]} 32%, ${g[2]} 70%, ${g[3]} 100%)`;
+    el.style.boxShadow = `0 0 30px ${FLAME_GLOWS[color] || FLAME_GLOWS.gold}`;
+    el.style.animation = isLit ? '' : 'none';
+    el.style.opacity = isLit ? '1' : '0.3';
+  }
+
+  // ==================== СОСТОЯНИЕ ====================
+  let candles = [];
+  let currentColor = 'gold';
+  let currentFilter = 'all';
+  let currentSort = 'new';
+  let searchQuery = '';
+  let selectedReason = null;
+  let selectedDuration = 3;
+  let currentScreen = 'reasons';
+  let modalCandleId = null;
+  let audioCtx = null;
+  let stats = { total: 0, today: 0, date: '' };
+  let candleOfDay = null;
+  let highlightId = null;
+
+  // ==================== DOM ====================
+  const altar = document.getElementById('altar');
+  const personName = document.getElementById('personName');
+  const prayerText = document.getElementById('prayerText');
+  const lightBtn = document.getElementById('lightBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const pngBtn = document.getElementById('pngBtn');
+  const importFile = document.getElementById('importFile');
+  const clearBtn = document.getElementById('clearBtn');
+  const colorPicker = document.getElementById('colorPicker');
+  const durationPicker = document.getElementById('durationPicker');
+  const reasonsCards = document.getElementById('reasonsCards');
+  const chosenReason = document.getElementById('chosenReason');
+  const chosenTitle = document.getElementById('chosenTitle');
+  const chosenDesc = document.getElementById('chosenDesc');
+  const changeReasonBtn = document.getElementById('changeReasonBtn');
+  const saintTip = document.getElementById('saintTip');
+  const saintTipToggle = document.getElementById('saintTipToggle');
+  const saintText = document.getElementById('saintText');
+  const installBtn = document.getElementById('installBtn');
+  const totalGlobal = document.getElementById('totalGlobal');
+  const todayGlobal = document.getElementById('todayGlobal');
+  const searchInput = document.getElementById('searchInput');
+  const sortSelect = document.getElementById('sortSelect');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalSub = document.getElementById('modalSub');
+  const modalText = document.getElementById('modalText');
+  const modalTimer = document.getElementById('modalTimer');
+  const modalFlame = document.getElementById('modalFlame');
+  const modalPray = document.getElementById('modalPray');
+  const modalShare = document.getElementById('modalShare');
+  const modalOk = document.getElementById('modalOk');
+  const modalBlow = document.getElementById('modalBlow');
+  const modalDel = document.getElementById('modalDel');
+  const quietPrayerOverlay = document.getElementById('quietPrayerOverlay');
+  const qpFlame = document.getElementById('qpFlame');
+  const qpText = document.getElementById('qpText');
+  const qpName = document.getElementById('qpName');
+  const qpClose = document.getElementById('qpClose');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const backBtn = document.getElementById('backBtn');
+  const viewCandlesBtn = document.getElementById('viewCandlesBtn');
+  const candlesBadge = document.getElementById('candlesBadge');
+  const steps = document.querySelectorAll('.steps .step');
+  const screens = {
+    reasons: document.getElementById('screenReasons'),
+    form: document.getElementById('screenForm'),
+    candles: document.getElementById('screenCandles')
+  };
+
+  // ==================== ХРАНИЛИЩЕ ====================
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(candles)); } catch (e) {}
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) candles = parsed.filter(validateCandle);
+      }
+    } catch (e) { candles = []; }
+  }
+  function validateCandle(c) {
+    return c && typeof c === 'object' &&
+      typeof c.id === 'string' &&
+      (c.type === 'health' || c.type === 'rest') &&
+      typeof c.height === 'number';
+  }
+
+  // ==================== СТАТИСТИКА ====================
+  async function refreshStats() {
+    const s = await fetchStats();
+    stats = s;
+    renderStats();
+  }
+  function renderStats() {
+    animateNumber(totalGlobal, stats.total);
+    animateNumber(todayGlobal, stats.today);
+  }
+  function bumpStats() {
+    incrementStats().then(s => {
+      if (s) { stats = s; renderStats(); }
+      else { stats.total += 1; stats.today += 1; renderStats(); }
+    });
+  }
+  function animateNumber(el, target) {
+    const start = parseInt(el.textContent.replace(/\D/g, ''), 10) || 0;
+    const diff = target - start;
+    const dur = 600;
+    const t0 = performance.now();
+    function step(t) {
+      const p = Math.min((t - t0) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(start + diff * eased).toLocaleString('ru-RU');
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ==================== СВЕЧА ДНЯ ====================
+  function loadCandleOfDay() {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const raw = localStorage.getItem(CANDLE_OF_DAY_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.date === today) { candleOfDay = data.id; return; }
+      }
+    } catch (e) {}
+    candleOfDay = null;
+  }
+  function pickCandleOfDay() {
+    if (candles.length === 0) { candleOfDay = null; return; }
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const raw = localStorage.getItem(CANDLE_OF_DAY_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.date === today) { candleOfDay = data.id; return; }
+      }
+    } catch (e) {}
+    const lit = candles.filter(c => c.lit !== false);
+    const pool = lit.length ? lit : candles;
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    candleOfDay = chosen.id;
+    try { localStorage.setItem(CANDLE_OF_DAY_KEY, JSON.stringify({ date: today, id: chosen.id })); } catch (e) {}
+  }
+
+  // ==================== АНАЛИТИКА ====================
+  function logAnalytics(action, extra) {
+    try {
+      let data = { visits: 0, sessions: 0, candlesLit: 0, reasons: {}, days: {} };
+      const raw = localStorage.getItem(ANALYTICS_KEY);
+      if (raw) { try { data = { ...data, ...JSON.parse(raw) }; } catch (e) {} }
+      const today = new Date().toISOString().slice(0, 10);
+      if (action === 'visit') {
+        data.visits += 1;
+        if (!sessionStorage.getItem('ana_session')) {
+          data.sessions += 1;
+          sessionStorage.setItem('ana_session', '1');
+        }
+        data.days[today] = (data.days[today] || 0) + 1;
+      } else if (action === 'candle') {
+        data.candlesLit += 1;
+        if (extra) data.reasons[extra] = (data.reasons[extra] || 0) + 1;
+      }
+      const days = Object.keys(data.days).sort().slice(-30);
+      const newDays = {};
+      days.forEach(d => newDays[d] = data.days[d]);
+      data.days = newDays;
+      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  // ==================== УТИЛИТЫ ====================
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str ?? '');
+    return div.innerHTML;
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function getReason(id) {
+    return REASONS.find(r => r.id === id) || null;
+  }
+
+  // ==================== СРОК ====================
+  function isForever(candle) { return candle.durationDays === 0; }
+  function expiresAt(candle) {
+    if (!candle.createdAt || !candle.durationDays) return null;
+    return candle.createdAt + candle.durationDays * 24 * 60 * 60 * 1000;
+  }
+  function isExpired(candle) {
+    if (isForever(candle)) return false;
+    const exp = expiresAt(candle);
+    return exp !== null && Date.now() > exp;
+  }
+  function remainingText(candle) {
+    if (isForever(candle)) return 'бессрочная';
+    const exp = expiresAt(candle);
+    if (exp === null) return '';
+    const diff = exp - Date.now();
+    if (diff <= 0) return 'догорела';
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    if (days > 0) return `осталось ${days} дн.`;
+    if (hours > 0) return `осталось ${hours} ч.`;
+    return `осталось ${Math.max(1, Math.floor(diff / (60 * 1000)))} мин.`;
+  }
+  function autoExpire() {
+    let changed = false;
+    candles.forEach(c => {
+      if (c.lit !== false && isExpired(c)) { c.lit = false; changed = true; }
+    });
+    if (changed) save();
+  }
+
+  // ==================== ЗВУК ====================
+  function initAudio() {
+    if (audioCtx) return;
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) { audioCtx = null; }
+  }
+  function playLightSound() {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(90, now + 0.35);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.5);
+  }
+  function playBlowSound() {
+    initAudio();
+    if (!audioCtx) return;
+    const duration = 0.5;
+    const bufferSize = audioCtx.sampleRate * duration;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / bufferSize;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.5) * 0.5;
+    }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + duration);
+    filter.Q.value = 0.8;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    src.connect(filter).connect(gain).connect(audioCtx.destination);
+    src.start();
+  }
+
+  // ==================== TOAST ====================
+  function showToast(msg) {
+    document.querySelectorAll('.toast').forEach(el => el.remove());
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    void el.offsetWidth;
+    el.classList.add('visible');
+    setTimeout(() => {
+      el.classList.remove('visible');
+      setTimeout(() => el.remove(), 350);
+    }, 2000);
+  }
+
+  // ==================== ЭКРАНЫ ====================
+  function showScreen(name) {
+    currentScreen = name;
+    Object.keys(screens).forEach(k => {
+      screens[k].classList.toggle('active', k === name);
+    });
+    const stepMap = { reasons: 1, form: 2, candles: 3 };
+    const activeNum = stepMap[name];
+    steps.forEach(s => {
+      const n = parseInt(s.dataset.step, 10);
+      s.classList.toggle('active', n === activeNum);
+      s.classList.toggle('done', n < activeNum);
+    });
+    if (name === 'reasons') {
+      backBtn.style.display = 'none';
+      viewCandlesBtn.style.display = 'flex';
+      viewCandlesBtn.classList.remove('primary');
+      viewCandlesBtn.classList.add('secondary');
+    } else if (name === 'form') {
+      backBtn.style.display = 'flex';
+      viewCandlesBtn.style.display = 'flex';
+      viewCandlesBtn.classList.remove('primary');
+      viewCandlesBtn.classList.add('secondary');
+    } else {
+      backBtn.style.display = 'flex';
+      viewCandlesBtn.style.display = 'none';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ==================== ПОВОДЫ ====================
+  function renderReasonsCards() {
+    reasonsCards.innerHTML = '';
+    REASONS.forEach(r => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'reason-card' + (selectedReason === r.id ? ' selected' : '');
+      card.dataset.id = r.id;
+      card.innerHTML = `
+        <span class="rc-title">${escapeHtml(r.title)}</span>
+        <span class="rc-desc">${escapeHtml(r.desc)}</span>
+      `;
+      card.addEventListener('click', () => selectReason(r.id));
+      reasonsCards.appendChild(card);
+    });
+  }
+  function selectReason(id) {
+    const r = getReason(id);
+    if (!r) return;
+    selectedReason = id;
+    renderReasonsCards();
+    chosenTitle.textContent = r.title;
+    chosenDesc.textContent = r.desc;
+    lightBtn.textContent = r.type === 'rest' ? 'Зажечь свечу об упокоении' : 'Зажечь свечу';
+    chosenReason.dataset.color = currentColor;
+    saintText.innerHTML = `<strong>Кому молятся:</strong> ${escapeHtml(SAINTS[r.id] || SAINTS.special)}`;
+    saintTip.classList.remove('open');
+    showScreen('form');
+    setTimeout(() => personName.focus(), 350);
+  }
+
+  // ==================== ФИЛЬТР / ПОИСК / СОРТИРОВКА ====================
+  function passesFilter(c) {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const inName = (c.name || '').toLowerCase().includes(q);
+      const inReason = (c.reasonTitle || '').toLowerCase().includes(q);
+      if (!inName && !inReason) return false;
+    }
+    switch (currentFilter) {
+      case 'lit':    return c.lit !== false;
+      case 'out':    return c.lit === false;
+      case 'health': return c.type === 'health';
+      case 'rest':   return c.type === 'rest';
+      default:       return true;
+    }
+  }
+  function sortCandles(arr) {
+    const sorted = arr.slice();
+    switch (currentSort) {
+      case 'old': sorted.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); break;
+      case 'reason': sorted.sort((a, b) => (a.reasonTitle || '').localeCompare(b.reasonTitle || '')); break;
+      case 'new':
+      default: sorted.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); break;
+    }
+    return sorted;
+  }
+
+  // ==================== ОТРИСОВКА СВЕЧЕЙ ====================
+  function createCandleElement(c) {
+    const el = document.createElement('div');
+    el.className = 'candle' + (c.lit === false ? ' out' : '');
+    if (c.id === candleOfDay && c.lit !== false) el.classList.add('candle-of-day');
+    if (c.id === highlightId) el.classList.add('highlight');
+    el.dataset.id = c.id;
+    el.dataset.color = c.color || 'gold';
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label',
+      (c.reasonTitle || (c.type === 'health' ? 'Свеча о здравии' : 'Свеча об упокоении')) +
+      (c.name ? ' ' + c.name : '') +
+      (c.lit === false ? ' (задута)' : '')
+    );
+
+    const labelTitle = c.reasonTitle || (c.type === 'health' ? 'О здравии' : 'Об упокоении');
+    const labelName = c.name ? `<span class="name">${escapeHtml(c.name)}</span>` : '';
+    const remaining = c.lit !== false ? remainingText(c) : '';
+    const forever = isForever(c);
+    const labelTimer = remaining
+      ? `<span class="timer${forever ? ' forever' : ''}">${escapeHtml(remaining)}</span>`
+      : '';
+    const h = c.height || 100;
+
+    el.innerHTML = `
+      <div class="flame-wrap">
+        <div class="glow"></div>
+        <div class="flame"></div>
+        <div class="smoke"></div>
+      </div>
+      <div class="body-candle" style="height:${h}px">
+        <div class="wick"></div>
+      </div>
+      <div class="holder"></div>
+      <div class="candle-label">${escapeHtml(labelTitle)}${labelName}${labelTimer}</div>
+    `;
+
+    el.addEventListener('click', () => openModal(c.id));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(c.id); }
+    });
+    return el;
+  }
+
+  function render() {
+    autoExpire();
+    altar.innerHTML = '';
+    let visible = candles.filter(passesFilter);
+    visible = sortCandles(visible);
+
+    if (visible.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'altar-empty';
+      empty.textContent = candles.length === 0
+        ? 'Свечей пока нет — зажгите первую'
+        : (searchQuery ? 'Ничего не найдено' : 'Нет свечей по выбранному фильтру');
+      altar.appendChild(empty);
+    } else {
+      visible.forEach(c => altar.appendChild(createCandleElement(c)));
+    }
+
+    altar.classList.toggle('many', visible.length > 4);
+    updateClearBtn();
+    updateBadge();
+    save();
+  }
+  function updateBadge() { candlesBadge.textContent = candles.length; const myCount = document.getElementById('myCount'); if (myCount) myCount.textContent = candles.length; }
+  function updateClearBtn() {
+    clearBtn.style.display = candles.length > 0 ? 'inline-block' : 'none';
+  }
+
+  // ==================== ЗАЖЕЧЬ ====================
+  function lightCandle() {
+    if (!selectedReason) {
+      showToast('Сначала выберите повод');
+      showScreen('reasons');
+      return;
+    }
+    const r = getReason(selectedReason);
+    if (!r) return;
+
+    const rawNames = personName.value.trim();
+    let names = [''];
+    if (rawNames) {
+      names = rawNames.split(',').map(s => s.trim().slice(0, 40)).filter(Boolean);
+      if (names.length === 0) names = [''];
+      if (names.length > 10) names = names.slice(0, 10);
+    }
+    const prayer = prayerText.value.trim().slice(0, 300);
+
+    const newIds = [];
+    names.forEach(name => {
+      const candle = {
+        id: uid(),
+        type: r.type,
+        reasonId: r.id,
+        reasonTitle: r.title,
+        color: currentColor,
+        name,
+        prayer,
+        lit: true,
+        height: 80 + Math.floor(Math.random() * 50),
+        createdAt: Date.now() + Math.random(),
+        durationDays: selectedDuration
+      };
+      candles.push(candle);
+      newIds.push(candle.id);
+      logAnalytics('candle', r.id);
+    });
+
+    pickCandleOfDay();
+    render();
+    playLightSound();
+    for (let i = 0; i < newIds.length; i++) bumpStats();
+
+    personName.value = '';
+    prayerText.value = '';
+    selectedReason = null;
+    renderReasonsCards();
+
+    if (newIds.length > 1) showToast(`Зажжено свечей: ${newIds.length}`);
+    else showToast(`Свеча «${r.title}» зажжена`);
+
+    showScreen('candles');
+    setTimeout(() => {
+      const el = altar.querySelector(`[data-id="${newIds[0]}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
+  }
+
+  // ==================== МОДАЛКА ====================
+  function openModal(id) {
+    const c = candles.find(x => x.id === id);
+    if (!c) return;
+    modalCandleId = id;
+
+    const isLit = c.lit !== false;
+    modalTitle.textContent = c.reasonTitle || (c.type === 'health' ? 'Свеча о здравии' : 'Свеча об упокоении');
+    modalSub.textContent = c.name ? `За: ${c.name}` : 'Без имени';
+
+    if (c.prayer) { modalText.textContent = c.prayer; modalText.classList.remove('empty'); }
+    else { modalText.textContent = isLit ? 'Тихая молитва без слов...' : 'Свеча задута.'; modalText.classList.add('empty'); }
+
+    if (isLit) {
+      if (isForever(c)) { modalTimer.textContent = 'Бессрочная свеча — горит постоянно'; modalTimer.classList.add('forever'); }
+      else { const rem = remainingText(c); modalTimer.textContent = rem ? `Горит: ${rem}` : ''; modalTimer.classList.remove('forever'); }
+      modalTimer.style.display = 'block';
+    } else {
+      modalTimer.textContent = isExpired(c) ? 'Свеча догорела' : 'Свеча задута';
+      modalTimer.classList.remove('forever');
+      modalTimer.style.display = 'block';
+    }
+
+    applyFlameStyle(modalFlame, c.color || 'gold', isLit);
+    modalBlow.textContent = isLit ? 'Задуть' : 'Зажечь';
+    modalPray.style.display = isLit ? 'block' : 'none';
+    modalOverlay.classList.add('show');
+    modalOk.focus();
+  }
+  function closeModal() {
+    modalOverlay.classList.remove('show');
+    modalCandleId = null;
+  }
+
+  function toggleCandle(id) {
+    const c = candles.find(x => x.id === id);
+    if (!c) return;
+    const wasLit = c.lit !== false;
+    c.lit = !wasLit;
+    if (!wasLit) {
+      c.createdAt = Date.now();
+      if (c.durationDays === undefined) c.durationDays = 3;
+    }
+    const el = altar.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.classList.toggle('out', !c.lit);
+      if (!c.lit) {
+        const smoke = el.querySelector('.smoke');
+        if (smoke) { smoke.style.animation = 'none'; void smoke.offsetWidth; smoke.style.animation = ''; }
+      }
+    }
+    if (wasLit) { playBlowSound(); showToast('Свеча задута'); }
+    else { playLightSound(); showToast('Свеча вновь горит'); }
+    pickCandleOfDay();
+    render();
+    if (modalCandleId === id) openModal(id);
+  }
+
+  function deleteCandle(id) {
+    const idx = candles.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    candles.splice(idx, 1);
+    closeModal();
+    pickCandleOfDay();
+    render();
+    showToast('Свеча убрана');
+  }
+
+  // ==================== ТИХАЯ МОЛИТВА ====================
+  function openQuietPrayer() {
+    const c = candles.find(x => x.id === modalCandleId);
+    if (!c) return;
+    if (c.lit === false) { showToast('Свеча не горит'); return; }
+	const text = PRAYERS[c.reasonId] || PRAYERS.special;
+    qpText.textContent = text;
+    qpName.textContent = c.name ? `За: ${c.name}` : '';
+    applyFlameStyle(qpFlame, c.color || 'gold', true);
+    closeModal();
+    quietPrayerOverlay.classList.add('show');
+  }
+  function closeQuietPrayer() { quietPrayerOverlay.classList.remove('show'); }
+
+  // ==================== ПОДЕЛИТЬСЯ ====================
+  async function shareCandle() {
+    if (!modalCandleId) return;
+    const url = `${location.origin}${location.pathname}?candle=${modalCandleId}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Свеча онлайн', text: 'Зажгите свечу вместе со мной', url });
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+        showToast('Ссылка скопирована');
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Ссылка скопирована');
+      }
+    } catch (e) { showToast('Не удалось скопировать'); }
+  }
+
+  // ==================== ССЫЛКА НА СВЕЧУ ====================
+  function handleCandleFromUrl() {
+    try {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('candle');
+      if (!id) return;
+      const c = candles.find(x => x.id === id);
+      if (!c) return;
+      highlightId = id;
+      renderStats(); render();
+      showScreen('candles');
+      setTimeout(() => {
+        const el = altar.querySelector(`[data-id="${id}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => openModal(id), 800);
+      }, 400);
+    } catch (e) {}
+  }
+
+  // ==================== ЭКСПОРТ / ИМПОРТ ====================
+  function exportCandles() {
+    if (candles.length === 0) { showToast('Нечего экспортировать'); return; }
+    const payload = { version: 11, exportedAt: new Date().toISOString(), candles };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `candles-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Свечи сохранены в файл');
+  }
+
+  function importCandles(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const arr = Array.isArray(data) ? data : data.candles;
+        if (!Array.isArray(arr)) throw new Error('bad format');
+        let added = 0;
+        arr.forEach(item => {
+          if (!validateCandle(item)) return;
+          candles.push({ ...item, id: uid() });
+          added++;
+        });
+        if (added === 0) { showToast('Не найдено свечей для импорта'); return; }
+        pickCandleOfDay();
+        render();
+        showToast(`Импортировано свечей: ${added}`);
+      } catch (err) { showToast('Ошибка чтения файла'); }
+    };
+    reader.readAsText(file);
+  }
+
+  // ==================== ЭКСПОРТ АЛТАРЯ В PNG ====================
+  function exportAltarPng() {
+    const visible = sortCandles(candles.filter(passesFilter));
+    if (visible.length === 0) { showToast('Нечего сохранять'); return; }
+
+    // Динамические размеры под количество свечей (1–4 колонки)
+    const cols = Math.min(Math.max(visible.length, 1), 4);
+    const rows = Math.ceil(visible.length / cols);
+    const cellW = 170;
+    const cellH = 280;
+    const padX = 40;
+    const padY = 50;
+    const headerH = 130;
+    const footerH = 70;
+    const W = cols * cellW + padX * 2;
+    const H = headerH + rows * cellH + footerH + padY * 2;
+
+    const canvas = document.createElement('canvas');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const bg1 = '#0d0a1f';
+    const bg2 = '#030208';
+    const gold = '#c9b6ff';
+    const goldSoft = '#a99ad4';
+    const goldDim = '#6d628f';
+
+    const grad = ctx.createRadialGradient(W / 2, H * 0.2, 0, W / 2, H * 0.2, H * 0.8);
+    grad.addColorStop(0, bg1);
+    grad.addColorStop(1, bg2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Заголовок — центрирован по фактической ширине
+    ctx.textAlign = 'center';
+    ctx.fillStyle = gold;
+    const titleSize = Math.min(34, Math.floor(W / 12));
+    ctx.font = `600 ${titleSize}px Georgia, serif`;
+    ctx.fillText('Поставить свечу онлайн', W / 2, padY + titleSize);
+
+    ctx.fillStyle = goldSoft;
+    ctx.font = `italic ${Math.floor(titleSize * 0.55)}px Georgia, serif`;
+    ctx.fillText('Ваша молитва будет услышана', W / 2, padY + titleSize * 1.7);
+
+    ctx.fillStyle = goldDim;
+    ctx.font = '14px Georgia, serif';
+    const dateStr = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    ctx.fillText(dateStr, W / 2, padY + titleSize * 1.7 + 26);
+
+    // Свечи
+    const startY = headerH + padY;
+    visible.forEach((c, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = padX + col * cellW + cellW / 2;
+      const baseY = startY + row * cellH + cellH - 70;
+
+      const colorKey = c.color || 'gold';
+      const g = FLAME_GRADIENTS[colorKey] || FLAME_GRADIENTS.gold;
+      const h = (c.height || 100) * 0.9;
+      const candleW = 26;
+
+      // Воск
+      const waxGrad = ctx.createLinearGradient(cx - candleW / 2, 0, cx + candleW / 2, 0);
+      const wax = {
+        gold:['#c9a86f','#fff6dd','#c9a86f'], blue:['#8aa8c9','#eaf4ff','#8aa8c9'],
+        violet:['#a88ac9','#f4eaff','#a88ac9'], green:['#8ac9a8','#eafff4','#8ac9a8'],
+        red:['#c98a8a','#ffeaea','#c98a8a'], pink:['#c98aa8','#ffeaf4','#c98aa8'],
+        turquoise:['#8ac9c4','#eafffe','#8ac9c4'], white:['#b8b8c4','#f8f8ff','#b8b8c4'],
+        amber:['#c9a86f','#fff0d8','#c9a86f']
+      }[colorKey] || ['#c9a86f','#fff6dd','#c9a86f'];
+      waxGrad.addColorStop(0, wax[0]);
+      waxGrad.addColorStop(0.5, wax[1]);
+      waxGrad.addColorStop(1, wax[2]);
+      ctx.fillStyle = waxGrad;
+      roundRect(ctx, cx - candleW / 2, baseY - h, candleW, h, 5);
+      ctx.fill();
+
+      // Держатель
+      ctx.fillStyle = '#b08d3e';
+      ctx.beginPath();
+      ctx.ellipse(cx, baseY + 2, 28, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#7a5c22';
+      ctx.beginPath();
+      ctx.ellipse(cx, baseY + 6, 28, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Пламя
+      const isLit = c.lit !== false;
+      if (isLit) {
+        const glowGrad = ctx.createRadialGradient(cx, baseY - h - 20, 0, cx, baseY - h - 20, 60);
+        glowGrad.addColorStop(0, 'rgba(200,180,255,0.4)');
+        glowGrad.addColorStop(1, 'rgba(200,180,255,0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, baseY - h - 20, 60, 0, Math.PI * 2);
+        ctx.fill();
+
+        const flameGrad = ctx.createRadialGradient(cx, baseY - h - 18, 0, cx, baseY - h - 18, 18);
+        flameGrad.addColorStop(0, g[0]);
+        flameGrad.addColorStop(0.4, g[1]);
+        flameGrad.addColorStop(0.8, g[2]);
+        flameGrad.addColorStop(1, g[3]);
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.ellipse(cx, baseY - h - 14, 9, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = 'rgba(200,200,200,0.3)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, baseY - h - 4);
+        ctx.quadraticCurveTo(cx + 10, baseY - h - 20, cx - 5, baseY - h - 36);
+        ctx.stroke();
+      }
+
+      // Подпись — обрезается, чтобы не вылезать за ячейку
+      ctx.fillStyle = goldSoft;
+      ctx.font = '13px Georgia, serif';
+      const label = c.reasonTitle || (c.type === 'health' ? 'О здравии' : 'Об упокоении');
+      const clipped = clipText(ctx, label, cellW - 20);
+      ctx.fillText(clipped, cx, baseY + 40);
+      if (c.name) {
+        ctx.fillStyle = goldDim;
+        ctx.font = 'italic 12px Georgia, serif';
+        const n = clipText(ctx, c.name, cellW - 20);
+        ctx.fillText(n, cx, baseY + 58);
+      }
+      if (isLit && !isForever(c)) {
+        ctx.fillStyle = goldDim;
+        ctx.font = '10px Georgia, serif';
+        ctx.fillText(remainingText(c), cx, baseY + 74);
+      } else if (isForever(c) && isLit) {
+        ctx.fillStyle = '#8a7ab8';
+        ctx.font = '10px Georgia, serif';
+        ctx.fillText('бессрочная', cx, baseY + 74);
+      }
+    });
+
+    // Подвал — центрирован и разбит на две строки при необходимости
+    ctx.fillStyle = goldDim;
+    ctx.font = 'italic 14px Georgia, serif';
+    ctx.fillText('Господи Иисусе Христе, Сыне Божий,', W / 2, H - padY + 10);
+    ctx.fillText('помилуй нас. Аминь.', W / 2, H - padY + 30);
+
+    canvas.toBlob((blob) => {
+      if (!blob) { showToast('Не удалось создать картинку'); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `candles-${new Date().toISOString().slice(0,10)}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Картинка сохранена');
+    }, 'image/png');
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  // Обрезка текста с многоточием, чтобы влез в ширину
+  function clipText(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let t = text;
+    while (t.length > 1 && ctx.measureText(t + '…').width > maxW) {
+      t = t.slice(0, -1);
+    }
+    return t + '…';
+  }
+
+  // ==================== ОЧИСТКА ====================
+  function clearAll() {
+    if (candles.length === 0) return;
+    if (!confirm('Убрать все свечи? Это действие нельзя отменить.')) return;
+    candles = [];
+    candleOfDay = null;
+    try { localStorage.removeItem(CANDLE_OF_DAY_KEY); } catch (e) {}
+    render();
+    showToast('Все свечи убраны');
+  }
+
+  // ==================== СВАЙПЫ ====================
+  let touchStartX = 0, touchStartY = 0, touchMoved = false;
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchMoved = false;
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 12 || Math.abs(dy) > 12) touchMoved = true;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!touchMoved) return;
+    if (modalOverlay.classList.contains('show')) return;
+    if (quietPrayerOverlay.classList.contains('show')) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx > 0) {
+      if (currentScreen === 'form' || currentScreen === 'candles') showScreen('reasons');
+    } else {
+      if (currentScreen === 'reasons' && selectedReason) showScreen('form');
+      else if (currentScreen === 'form') { renderStats(); render(); showScreen('candles'); }
+    }
+  }, { passive: true });
+
+  // ==================== СОБЫТИЯ ====================
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      render();
+    });
+  });
+
+  colorPicker.querySelectorAll('.color-swatch').forEach(sw => {
+    const activate = () => {
+      colorPicker.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      currentColor = sw.dataset.c;
+      chosenReason.dataset.color = currentColor;
+    };
+    sw.addEventListener('click', activate);
+    sw.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
+  });
+
+  durationPicker.querySelectorAll('.duration-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      durationPicker.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedDuration = parseInt(btn.dataset.days, 10);
+    });
+  });
+
+  saintTipToggle.addEventListener('click', () => saintTip.classList.toggle('open'));
+  lightBtn.addEventListener('click', lightCandle);
+  personName.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); lightCandle(); }
+  });
+  changeReasonBtn.addEventListener('click', () => showScreen('reasons'));
+
+  backBtn.addEventListener('click', () => {
+    if (currentScreen === 'form') showScreen('reasons');
+    else if (currentScreen === 'candles') showScreen('reasons');
+  });
+
+  viewCandlesBtn.addEventListener('click', () => {
+    render(); renderStats();
+    showScreen('candles');
+  });
+
+  steps.forEach(s => {
+    s.addEventListener('click', () => {
+      const n = parseInt(s.dataset.step, 10);
+      if (n === 1) showScreen('reasons');
+      else if (n === 2) {
+        if (selectedReason) showScreen('form');
+        else showToast('Сначала выберите повод');
+      } else { render(); renderStats(); showScreen('candles'); }
+    });
+  });
+
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim();
+    render();
+  });
+  sortSelect.addEventListener('change', () => {
+    currentSort = sortSelect.value;
+    render();
+  });
+
+  modalOk.addEventListener('click', closeModal);
+  modalPray.addEventListener('click', openQuietPrayer);
+  modalShare.addEventListener('click', shareCandle);
+  modalBlow.addEventListener('click', () => { if (modalCandleId) toggleCandle(modalCandleId); });
+  modalDel.addEventListener('click', () => { if (modalCandleId) deleteCandle(modalCandleId); });
+  modalOverlay.addEventListener('click', e => {
+    if (e.target === modalOverlay) closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (quietPrayerOverlay.classList.contains('show')) closeQuietPrayer();
+      else if (modalOverlay.classList.contains('show')) closeModal();
+    }
+  });
+
+  qpClose.addEventListener('click', closeQuietPrayer);
+  quietPrayerOverlay.addEventListener('click', e => {
+    if (e.target === quietPrayerOverlay) closeQuietPrayer();
+  });
+
+  exportBtn.addEventListener('click', exportCandles);
+  importBtn.addEventListener('click', () => importFile.click());
+  pngBtn.addEventListener('click', exportAltarPng);
+  importFile.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) importCandles(f);
+    importFile.value = '';
+  });
+  clearBtn.addEventListener('click', clearAll);
+
+  // ==================== PWA ====================
+  let deferredInstallPrompt = null;
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installBtn.classList.add('show');
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) { showToast('Установка недоступна'); return; }
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice.outcome === 'accepted') showToast('Приложение установлено');
+    deferredInstallPrompt = null;
+    installBtn.classList.remove('show');
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installBtn.classList.remove('show');
+    showToast('Приложение установлено');
+  });
+
+  // ==================== СТАРТ ====================
+  load();
+  renderReasonsCards();
+  pickCandleOfDay();
+  render();
+  updateBadge();
+  showScreen('reasons');
+  refreshStats();
+  handleCandleFromUrl();
+  logAnalytics('visit');
+
+  setInterval(() => {
+    autoExpire();
+    if (currentScreen === 'candles') render();
+    if (modalCandleId && modalOverlay.classList.contains('show')) {
+      const c = candles.find(x => x.id === modalCandleId);
+      if (c && c.lit !== false) {
+        if (isForever(c)) { modalTimer.textContent = 'Бессрочная свеча — горит постоянно'; modalTimer.classList.add('forever'); }
+        else { const rem = remainingText(c); modalTimer.textContent = rem ? `Горит: ${rem}` : ''; modalTimer.classList.remove('forever'); }
+      }
+    }
+  }, 60 * 1000);
+</script>
+
+</body>
+</html>
